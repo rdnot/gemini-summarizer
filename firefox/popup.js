@@ -145,32 +145,76 @@ document.addEventListener('DOMContentLoaded', async function() {
     return candidate.content.parts[0].text.trim();
   }
 
-  // Helper: Call OpenRouter API (for text-based tasks)
-  async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
-    if (outputMsg) output.innerHTML = outputMsg;
-    if (!apiKey || !model) {
-      throw new Error('Missing OpenRouter API key or model.');
-    }
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://your-site.com', // Optional
-        'X-Title': 'Gemini Summarizer' // Optional
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 8192,
-        temperature: 0.5
-      })
-    });
-    if (!response.ok) throw new Error(`OpenRouter API error: ${response.status} - ${response.statusText}`);
-    const data = await response.json();
-    if (!data.choices || data.choices.length === 0) throw new Error('No choices in API response.');
-    return data.choices[0].message.content.trim();
+// Helper: Call OpenRouter API (for text-based tasks)
+async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
+  if (outputMsg) output.innerHTML = outputMsg;  // No extra spacing
+  if (!apiKey || !model) {
+    throw new Error('Missing OpenRouter API key or model.');
   }
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://your-site.com', // Optional
+      'X-Title': 'Gemini Summarizer' // Optional
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 8192,
+      temperature: 0.5,
+      stream: true  // <-- The one-line enable
+    })
+  });
+
+  if (!response.ok) throw new Error(`OpenRouter API error: ${response.status} - ${response.statusText}`);
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let fullContent = '';
+  let buffer = '';
+  let started = false;  // Flag to clear status on first token
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+          try {
+            const parsed = JSON.parse(line.slice(6));
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              fullContent += delta;
+              if (!started) {
+                output.innerHTML = '';  // Clear status on first token
+                started = true;
+              }
+              // Aggressive clean: Collapse multiples + trim leading/trailing \n
+              const cleanContent = fullContent.replace(/\n{2,}/g, '\n').trim();
+              output.innerHTML = cleanContent;
+            }
+          } catch (e) {
+            console.warn('Parse error in chunk:', e);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    throw new Error(`Stream error: ${error.message}`);
+  } finally {
+    reader.releaseLock();
+  }
+
+  // Final clean (ensures no extras)
+  const finalClean = fullContent.replace(/\n{2,}/g, '\n').trim();
+  output.innerHTML = finalClean;
+  return finalClean;
+}
 
   // Helper: Call appropriate API for text generation
   async function callTextApi(prompt, outputMsg = '', isRefine = false) {
@@ -543,4 +587,5 @@ ${text}`;
   });
 
   console.log('Init complete'); // Debug
+
 });
