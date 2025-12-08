@@ -215,7 +215,6 @@ async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
   output.innerHTML = finalClean;
   return finalClean;
 }
-
   // Helper: Call appropriate API for text generation
   async function callTextApi(prompt, outputMsg = '', isRefine = false) {
     const apiKey = geminiApiKeyInput.value.trim();
@@ -589,3 +588,4 @@ ${text}`;
   console.log('Init complete'); // Debug
 
 });
+
