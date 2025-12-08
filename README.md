@@ -36,8 +36,8 @@ This repository contains versions for both Chrome and Firefox. The code is mostl
 1. Clone or download this repository.
 2. Open Firefox and go to `about:debugging#/runtime/this-firefox`.
 3. Click "Load Temporary Add-on" and select the `manifest.json` file from the `firefox/` folder (or the root if not using subfolders).
-4. The extension will load temporarily (until browser restart). For permanent installation, submit to Firefox Add-ons or use a signed version.
-https://addons.mozilla.org/en-US/firefox/addon/gemini-summarizer-q-a/
+4. The extension will load temporarily (until browser restart). For permanent installation, use Firefox Developer Edition or use a signed version.
+   https://addons.mozilla.org/en-US/firefox/addon/gemini-summarizer-q-a/
 
 ## Usage
 1. Open the extension popup on a webpage.
@@ -69,6 +69,7 @@ https://addons.mozilla.org/en-US/firefox/addon/gemini-summarizer-q-a/
 ## License
 
 This project is licensed under the MIT License.
+
 
 
 
