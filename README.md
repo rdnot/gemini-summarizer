@@ -2,6 +2,8 @@
 
 A powerful browser extension for summarizing selected text (or full page) and answering questions using Google Gemini / OpenRouter API. Includes image capture and description, web search integration via Tavily/Brave/You.com, and quick prompts for Gemini/ChatGPT/Grok.
 
+![Popup Interface v1.4](screenshot1.4.png)
+
 ## About
 Gemini Summarizer & Q&A lets you quickly summarize web pages or selected text using Google's Gemini AI or OpenRouter. Auto-load text from any tab, generate bullet-point summaries, or ask questions for concise answers. Features include: screenshot capture for image descriptions; optional Tavily/Brave/You.com web search API for enriched responses; and one-click prompt copying to Gemini, ChatGPT, or Grok sites. Securely handles your API keys; data (text/screenshots) is only sent to APIs upon user request—no tracking or storage. Ideal for research, reading, and productivity. Requires free Gemini / OpenRouter API key; supports multiple models like 2.5 Flash / 2.5 Flash Lite / 2.5 Pro / Robotics-ER 1.5 Preview.
 
@@ -65,4 +67,5 @@ https://addons.mozilla.org/en-US/firefox/addon/gemini-summarizer-q-a/
 - **Data Collection**: Website content (text/screenshots) only when you request summaries/Q&A/images. No tracking or external storage.
 
 ## License
+
 This project is licensed under the MIT License.
