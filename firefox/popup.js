@@ -15,6 +15,13 @@ document.addEventListener('DOMContentLoaded', async function() {
   const grokBtn = document.getElementById('grok-btn');
   const textInput = document.getElementById('textInput');
   const questionInput = document.getElementById('questionInput');
+  // Auto-trigger generate on Enter in question input
+questionInput.addEventListener('keydown', function(event) {
+  if (event.key === 'Enter') {
+    event.preventDefault(); // Prevent default Enter behavior (e.g., newline in input)
+    generateBtn.click(); // Trigger the generate button's event handler
+  }
+});
   const output = document.getElementById('output');
 
   let fullPageText = ''; // Store untrimmed text
@@ -95,55 +102,88 @@ document.addEventListener('DOMContentLoaded', async function() {
     return openRouterModelInput.value.trim() || 'arcee-ai/trinity-mini:free';
   }
 
-  // Helper: Call Gemini API (reusable, for text and vision)
-  async function callGemini(apiKey, model, prompt, outputMsg = '', isVision = false, base64Image = null) {
-    if (outputMsg) output.innerHTML = outputMsg;
+// Helper: Call Gemini API (reusable, for text and vision) - now with streaming
+async function callGemini(apiKey, model, prompt, outputMsg = '', isVision = false, base64Image = null) {
+  if (outputMsg) output.innerHTML = outputMsg;
 
-    let contents = [{ parts: [{ text: prompt }] }];
-    if (isVision && base64Image) {
-      contents = [{ parts: [
-        { inlineData: { mimeType: 'image/png', data: base64Image } },
-        { text: prompt }
-      ] }];
-    }
-
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-      method: 'POST',
-      headers: {
-        'x-goog-api-key': apiKey,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          maxOutputTokens: 8192,
-          temperature: 0.5
-        },
-        safetySettings: [
-          { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
-          { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
-          { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_LOW_AND_ABOVE" },
-          { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_LOW_AND_ABOVE" }
-        ]
-      })
-    });
-
-    if (!response.ok) throw new Error(`API error: ${response.status} - ${response.statusText}`);
-
-    const data = await response.json();
-    if (!data.candidates || data.candidates.length === 0) throw new Error('No candidates in API response.');
-
-    const candidate = data.candidates[0];
-    if (candidate.finishReason && candidate.finishReason !== 'STOP') {
-      throw new Error(`Generation stopped: ${candidate.finishReason}`);
-    }
-
-    if (!candidate.content || !candidate.content.parts || !candidate.content.parts[0]) {
-      throw new Error('Empty content from API.');
-    }
-
-    return candidate.content.parts[0].text.trim();
+  let contents = [{ parts: [{ text: prompt }] }];
+  if (isVision && base64Image) {
+    contents = [{ parts: [
+      { inlineData: { mimeType: 'image/png', data: base64Image } },
+      { text: prompt }
+    ] }];
   }
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      contents,
+      generationConfig: {
+        maxOutputTokens: 8192,
+        temperature: 0.5
+      },
+      safetySettings: [
+        { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
+        { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
+        { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_LOW_AND_ABOVE" },
+        { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_LOW_AND_ABOVE" }
+      ]
+    })
+  });
+
+  if (!response.ok) throw new Error(`API error: ${response.status} - ${response.statusText}`);
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let fullContent = '';
+  let buffer = '';
+  let started = false;  // Flag to clear status on first token
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+          try {
+            const parsed = JSON.parse(line.slice(6));
+            const candidate = parsed.candidates?.[0];
+            if (candidate && candidate.content && candidate.content.parts && candidate.content.parts[0]) {
+              const delta = candidate.content.parts[0].text;
+              if (delta) {
+                fullContent += delta;
+                if (!started) {
+                  output.innerHTML = '';  // Clear status on first token
+                  started = true;
+                }
+                // Aggressive clean: Collapse multiples + trim leading/trailing \n
+                const cleanContent = fullContent.replace(/\n{2,}/g, '\n').trim();
+                output.innerHTML = cleanContent;
+              }
+            }
+          } catch (e) {
+            console.warn('Parse error in chunk:', e);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    throw new Error(`Stream error: ${error.message}`);
+  } finally {
+    reader.releaseLock();
+  }
+
+  // Final clean (ensures no extras)
+  const finalClean = fullContent.replace(/\n{2,}/g, '\n').trim();
+  output.innerHTML = finalClean;
+  return finalClean;
+}
 
 // Helper: Call OpenRouter API (for text-based tasks)
 async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
@@ -588,4 +628,5 @@ ${text}`;
   console.log('Init complete'); // Debug
 
 });
+
 
