@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Gemini Summarizer",
-  "version": "1.5",
+  "version": "1.6",
   "description": "AI summarizer for selected/full-page text & Q&A via Gemini. Includes image analysis, Tavily search, & prompts for Gemini/GPT/Grok.",
   "icons": {
     "16": "icon_16.png",
@@ -10,7 +10,7 @@
     "128": "icon_128.png"
   },
   "permissions": ["storage", "activeTab"],
-  "host_permissions": ["https://api.tavily.com/*", "https://api.search.brave.com/*", "https://ydc-index.io/*", "https://openrouter.ai/*"],
+  "host_permissions": ["https://api.tavily.com/*", "https://api.search.brave.com/*", "https://ydc-index.io/*", "https://openrouter.ai/*", "https://generativelanguage.googleapis.com/*"],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -22,3 +22,4 @@
   }
 
 }
+
