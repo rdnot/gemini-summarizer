@@ -164,7 +164,7 @@ async function callGemini(apiKey, model, prompt, outputMsg = '', isVision = fals
                 }
                 // Aggressive clean: Collapse multiples + trim leading/trailing \n
                 const cleanContent = fullContent.replace(/\n{2,}/g, '\n').trim();
-                output.innerHTML = cleanContent;
+                output.innerHTML = renderMarkdown(cleanContent);
               }
             }
           } catch (e) {
@@ -181,7 +181,7 @@ async function callGemini(apiKey, model, prompt, outputMsg = '', isVision = fals
 
   // Final clean (ensures no extras)
   const finalClean = fullContent.replace(/\n{2,}/g, '\n').trim();
-  output.innerHTML = finalClean;
+  output.innerHTML = renderMarkdown(finalClean);
   return finalClean;
 }
 
@@ -236,7 +236,7 @@ async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
               }
               // Aggressive clean: Collapse multiples + trim leading/trailing \n
               const cleanContent = fullContent.replace(/\n{2,}/g, '\n').trim();
-              output.innerHTML = cleanContent;
+              output.innerHTML = renderMarkdown(cleanContent);
             }
           } catch (e) {
             console.warn('Parse error in chunk:', e);
@@ -252,7 +252,7 @@ async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
 
   // Final clean (ensures no extras)
   const finalClean = fullContent.replace(/\n{2,}/g, '\n').trim();
-  output.innerHTML = finalClean;
+  output.innerHTML = renderMarkdown(finalClean);
   return finalClean;
 }
   // Helper: Call appropriate API for text generation
@@ -388,7 +388,46 @@ async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
       return '';
     }
   }
-
+// Helper: Lightweight Markdown to HTML (no deps, regex-based) - tightened spacing
+function renderMarkdown(mdText) {
+  if (!mdText) return '';
+  let html = mdText
+    // Headers (# H1, ## H2, etc.)
+    .replace(/^### (.*$)/gm, '<h3 style="margin: 0.5em 0 0.25em;">$1</h3>')
+    .replace(/^## (.*$)/gm, '<h2 style="margin: 0.5em 0 0.25em;">$2</h2>')
+    .replace(/^# (.*$)/gm, '<h1 style="margin: 0.5em 0 0.25em;">$1</h1>')
+    // Bold (**text** or __text__)
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__(.*?)__/g, '<strong>$1</strong>')
+    // Italic (*text* or _text_)
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/_(.*?)_/g, '<em>$1</em>')
+    // Inline code (`code`)
+    .replace(/`(.*?)`/g, '<code style="background:#f4f4f4;padding:0.1em 0.3em;border-radius:2px;font-family:monospace;">$1</code>')
+    // Code blocks (```code``` or indented)
+    .replace(/```([\s\S]*?)```/g, '<pre style="margin:0.5em 0;background:#f4f4f4;padding:0.75em;overflow-x:auto;border-radius:3px;"><code>$1</code></pre>')
+    .replace(/^( {4}.*)$/gm, '<pre style="margin:0.5em 0;background:#f4f4f4;padding:0.75em;overflow-x:auto;border-radius:3px;"><code>$1</code></pre>')
+    // Blockquotes (> text)
+    .replace(/^> (.*$)/gm, '<blockquote style="margin:0.5em 0;padding-left:0.75em;border-left:2px solid #ddd;color:#666;">$1</blockquote>')
+    // Lists: First replace bullets/numbers to <li> only (preserve \n for grouping)
+    .replace(/^\s*[*-]\s+(.*$)/gm, '<li style="margin:0.1em 0;">$1</li>\n')
+    .replace(/^\s*\d+[.)]\s+(.*$)/gm, '<li style="margin:0.1em 0;">$1</li>\n')
+    // Collapse whitespace heavily before HTML conversion
+    .replace(/\n{3,}/g, '\n\n') // Max 2 newlines
+    .replace(/\n\n/g, '</p><p>') // Paragraph breaks
+    .replace(/\n/g, ' '); // Single lines → space (no <br>)
+  // Wrap consecutive <li> in <ul> (turns numbered into bullets/points)
+  html = html.replace(/(<li[^>]*>.*?<\/li>\s*)+/gs, '<ul style="margin:0.25em 0;padding-left:1.25em;">$&</ul>');
+  // Links [text](url)
+  html = html.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:#4285f4;text-decoration:none;">$1</a>');
+  // Wrap loose text in <p> if not starting with block element, but tight margins
+  if (!html.match(/^<(h[1-3]|ul|ol|blockquote|pre)/)) {
+    html = '<p style="margin:0.25em 0;line-height:1.3;">' + html + '</p>';
+  }
+  // Clean up any trailing </p><p> or extras
+  html = html.replace(/<\/p><p><\/p>/g, '</p>').replace(/<p>\s*<\/p>/g, '');
+  return html;
+}
   // Save API keys and model
   saveKeyBtn.addEventListener('click', function() {
     const geminiKey = geminiApiKeyInput.value.trim();
@@ -442,7 +481,7 @@ ${originalText}`;
 
       try {
         const generatedText = await callTextApi(finalPrompt, `Generating summary...`);
-        output.innerHTML = generatedText.replace(/\n\n/g, '\n');
+        output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
       } catch (error) {
         console.error('Error:', error);
         output.innerHTML = `Error: ${error.message}\n\nTip: Check console for details.`;
@@ -483,7 +522,7 @@ ${originalText}
 ${webContext}`;
 
         const generatedText = await callTextApi(finalPrompt, 'Generating full response with web context...');
-        output.innerHTML = generatedText.replace(/\n\n/g, '\n');
+        output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
       } catch (error) {
         console.error('Error:', error);
         output.innerHTML = `Error: ${error.message}\n\nTip: Check console for details.`;
@@ -499,7 +538,7 @@ ${originalText}`;
 
       try {
         const generatedText = await callTextApi(finalPrompt);
-        output.innerHTML = generatedText.replace(/\n\n/g, '\n');
+        output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
       } catch (error) {
         console.error('Error:', error);
         output.innerHTML = `Error: ${error.message}\n\nTip: Check console for details.`;
@@ -532,7 +571,7 @@ ${originalText}`;
         visionPrompt = 'Describe and summarize this image in detail, structured as 10 key bullet points for readability.';
 
         const generatedText = await callGemini(apiKey, selectedModel, visionPrompt, undefined, true, base64Image);
-        output.innerHTML = generatedText.replace(/\n\n/g, '\n');
+        output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
         return;
       }
 
@@ -561,7 +600,7 @@ Question: ${question}`;
         visionPrompt = `Describe and summarize this image in detail, structured as 10 key bullet points for readability (do NOT include or reference any web search context in the description). Then, answer this question about the image in under 100 words, drawing from the image AND the web search context: "${question}". Use "Description:" for bullets and "Answer:" for the response.${webContext}`;
 
         const generatedText = await callGemini(apiKey, selectedModel, visionPrompt, 'Generating full response with web context...', true, base64Image);
-        output.innerHTML = generatedText.replace(/\n\n/g, '\n');
+        output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
       } else {
         // No search: Single Gemini call with fallback prompt (no refinement or search)
         output.innerHTML = `Generating without web search (no search key)...`;
@@ -569,7 +608,7 @@ Question: ${question}`;
         visionPrompt = `Describe and summarize this image in detail, structured as 10 key bullet points for readability. Then, answer this question about the image in under 100 words: "${question}". Use "Description:" for bullets and "Answer:" for the response.`;
 
         const generatedText = await callGemini(apiKey, selectedModel, visionPrompt, undefined, true, base64Image);
-        output.innerHTML = generatedText.replace(/\n\n/g, '\n');
+        output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
       }
     } catch (error) {
       console.error('Error:', error);
@@ -628,4 +667,5 @@ ${text}`;
   console.log('Init complete'); // Debug
 
 });
+
 
