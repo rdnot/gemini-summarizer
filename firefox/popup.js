@@ -394,7 +394,7 @@ function renderMarkdown(mdText) {
   let html = mdText
     // Headers (# H1, ## H2, etc.)
     .replace(/^### (.*$)/gm, '<h3 style="margin: 0.5em 0 0.25em;">$1</h3>')
-    .replace(/^## (.*$)/gm, '<h2 style="margin: 0.5em 0 0.25em;">$2</h2>')
+    .replace(/^## (.*$)/gm, '<h2 style="margin: 0.5em 0 0.25em;">$1</h2>')
     .replace(/^# (.*$)/gm, '<h1 style="margin: 0.5em 0 0.25em;">$1</h1>')
     // Bold (**text** or __text__)
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
@@ -415,7 +415,9 @@ function renderMarkdown(mdText) {
     // Collapse whitespace heavily before HTML conversion
     .replace(/\n{3,}/g, '\n\n') // Max 2 newlines
     .replace(/\n\n/g, '</p><p>') // Paragraph breaks
-    .replace(/\n/g, ' '); // Single lines → space (no <br>)
+    .replace(/(<\/h[1-3]>|<\/ul>|<\/ol>|<\/blockquote>|<\/pre>)\s*/g, '$1\n\n')
+    .replace(/\s*(<h[1-3]>|<ul>|<ol>|<blockquote>|<pre>)/g, '\n\n$1')
+    .replace(/\n/g, ' ')
   // Wrap consecutive <li> in <ul> (turns numbered into bullets/points)
   html = html.replace(/(<li[^>]*>.*?<\/li>\s*)+/gs, '<ul style="margin:0.25em 0;padding-left:1.25em;">$&</ul>');
   // Links [text](url)
@@ -667,6 +669,7 @@ ${text}`;
   console.log('Init complete'); // Debug
 
 });
+
 
 
 
