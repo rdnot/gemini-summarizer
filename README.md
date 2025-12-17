@@ -26,6 +26,7 @@ This repository contains versions for both Chrome and Firefox. The code is mostl
 ## Installation
 
 ### Chrome
+https://chromewebstore.google.com/detail/gemini-summarizer/cbodaoohpciajejghechmnnlieecfege
 1. Clone or download this repository.
 2. Open Chrome and go to `chrome://extensions/`.
 3. Enable "Developer mode" in the top right.
@@ -33,11 +34,12 @@ This repository contains versions for both Chrome and Firefox. The code is mostl
 5. The extension should appear in your toolbar. Click it to open the popup.
 
 ### Firefox
+https://addons.mozilla.org/en-US/firefox/addon/gemini-summarizer-q-a/
 1. Clone or download this repository.
 2. Open Firefox and go to `about:debugging#/runtime/this-firefox`.
 3. Click "Load Temporary Add-on" and select the `manifest.json` file from the `firefox/` folder (or the root if not using subfolders).
 4. The extension will load temporarily (until browser restart). For permanent installation, use Firefox Developer Edition or use a signed version.
-   https://addons.mozilla.org/en-US/firefox/addon/gemini-summarizer-q-a/
+   
 
 ## Usage
 1. Open the extension popup on a webpage.
@@ -69,6 +71,7 @@ This repository contains versions for both Chrome and Firefox. The code is mostl
 ## License
 
 This project is licensed under the MIT License.
+
 
 
 
