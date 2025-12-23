@@ -168,7 +168,15 @@
   </style>
 </head>
 <body>
-  <h3>Gemini Summarizer & Q&A</h3>
+<div style="display: flex; align-items: center; justify-content: space-between;">
+  <h3 style="margin: 0;">Gemini Summarizer & Q&A</h3>
+  <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+    <input type="checkbox" id="autoSummarize">
+    <label for="autoSummarize" style="font-size: 13px; margin: 0; cursor: pointer; user-select: none; white-space: nowrap; color: #555;">
+      Auto
+    </label>
+  </div>
+</div>
   
   <div class="compact-row">
     <input type="password" id="geminiApiKey" placeholder="paste your gemini API key here">
@@ -177,6 +185,7 @@
       <option value="gemini-2.5-flash-lite">2.5 Flash Lite</option>
       <option value="gemini-2.5-pro">2.5 Pro</option>
       <option value="gemini-robotics-er-1.5-preview">Robotics-ER 1.5 Preview</option>
+      <option value="gemini-3-flash-preview">3 Flash preview</option>
     </select>
     <button id="saveKey">Save</button>
   </div>
@@ -210,4 +219,5 @@
   
   <script src="popup.js"></script>
 </body>
+
 </html>
