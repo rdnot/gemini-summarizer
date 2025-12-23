@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Gemini Summarizer",
-  "version": "1.8",
+  "version": "1.9",
   "description": "AI summarizer for selected/full-page text & Q&A via Gemini. Includes image analysis, Tavily search, & prompts for Gemini/GPT/Grok.",
   "icons": {
     "16": "icon_16.png",
@@ -22,6 +22,7 @@
   }
 
 }
+
 
 
 
