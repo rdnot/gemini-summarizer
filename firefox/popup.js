@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', async function() {
   console.log('Popup loaded - starting init'); // Debug
-
+  const autoSummarizeCheckbox = document.getElementById('autoSummarize');
   const saveKeyBtn = document.getElementById('saveKey');
   const geminiApiKeyInput = document.getElementById('geminiApiKey');
   const searchApiKeyInput = document.getElementById('searchApiKey');
@@ -27,7 +27,7 @@ questionInput.addEventListener('keydown', function(event) {
   let fullPageText = ''; // Store untrimmed text
 
   // Load saved API keys and model on popup open
-  browser.storage.sync.get(['geminiApiKey', 'searchApiKey', 'useOpenRouter', 'openRouterApiKey', 'openRouterModel', 'selectedModel'], function(result) {
+  browser.storage.sync.get(['geminiApiKey', 'searchApiKey', 'useOpenRouter', 'openRouterApiKey', 'openRouterModel', 'selectedModel', 'autoSummarize'], function(result) {
     console.log('Storage result:', result); // Debug
     if (result.geminiApiKey) {
       geminiApiKeyInput.value = result.geminiApiKey;
@@ -669,6 +669,7 @@ ${text}`;
   console.log('Init complete'); // Debug
 
 });
+
 
 
 
