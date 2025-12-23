@@ -29,7 +29,7 @@ const currentDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.
   let fullPageText = ''; // Store untrimmed text
 
   // Load saved API keys and model on popup open
-  chrome.storage.sync.get(['geminiApiKey', 'searchApiKey', 'useOpenRouter', 'openRouterApiKey', 'openRouterModel', 'selectedModel'], function(result) {
+  chrome.storage.sync.get(['geminiApiKey', 'searchApiKey', 'useOpenRouter', 'openRouterApiKey', 'openRouterModel', 'selectedModel', 'autoSummarize'], function(result) {
     console.log('Storage result:', result); // Debug
     if (result.geminiApiKey) {
       geminiApiKeyInput.value = result.geminiApiKey;
@@ -692,6 +692,7 @@ ${text}`;
   console.log('Init complete'); // Debug
 
 });
+
 
 
 
