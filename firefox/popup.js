@@ -23,7 +23,9 @@ questionInput.addEventListener('keydown', function(event) {
   }
 });
   const output = document.getElementById('output');
-
+// Add this near the top of your script (after const output = ...;)
+const today = new Date();
+const currentDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
   let fullPageText = ''; // Store untrimmed text
 
   // Load saved API keys and model on popup open
@@ -53,7 +55,20 @@ questionInput.addEventListener('keydown', function(event) {
       modelSelect.value = result.selectedModel;
       console.log('Model loaded:', result.selectedModel);
     }
+    if (result.autoSummarize !== undefined) {
+      autoSummarizeCheckbox.checked = result.autoSummarize;
+    } else {
+      autoSummarizeCheckbox.checked = false; // default off
+    }
   });
+
+  // Save the checkbox setting whenever it changes (Promises):
+autoSummarizeCheckbox.addEventListener('change', function() {
+  browser.storage.sync.set({ autoSummarize: this.checked })
+    .then(() => {
+      console.log('Auto-summarize preference saved:', this.checked);
+    });
+});
 
   // Auto-load text from current tab (selection or full page) - NO TRIM
   try {
@@ -80,6 +95,15 @@ questionInput.addEventListener('keydown', function(event) {
       textInput.value = fullPageText; // Load full directly - NO TRIM
       output.innerHTML = response.isSelection ? 'Selected text loaded!' : `Full page loaded (${Math.round(fullPageText.length / 1000)}k chars)! Leave question blank for summary, or enter a question for Q&A.`;
       console.log('Text loaded:', fullPageText.length, 'chars');
+
+      // Auto-summarize ONLY after the "Full page loaded" message is shown
+if (autoSummarizeCheckbox.checked) {
+  // Small delay to ensure UI shows the "Full page loaded" message first
+  setTimeout(() => {
+    generateBtn.click();
+  }, 300);
+}
+      
     });
   } catch (error) {
     console.error('Tab query error:', error);
@@ -476,7 +500,7 @@ function renderMarkdown(mdText) {
 
     if (!question) {
       // No question: Direct summary (1 call)
-      finalPrompt = `Provide a concise summary of the following text in under 400 words total, structured as 10 key bullet points for readability (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Keep overall output short to fit fully.
+      finalPrompt = `Provide a concise summary of the following text in under 400 words total, structured as 10 key bullet points for readability (today is ${currentDate}) (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Keep overall output short to fit fully.
 
 Text:
 ${originalText}`;
@@ -498,7 +522,7 @@ ${originalText}`;
 
       try {
         // Step 1: Refine query with context from text
-        const refinePrompt = `Based on the following text and user question, generate a single, concise web search query (under 400 characters total) that incorporates key context from the text to find relevant, up-to-date information for answering the question accurately. Output ONLY the query itself, nothing else.
+        const refinePrompt = `Based on the following text and user question, generate a single, concise web search query (today is ${currentDate}, keep the refine search query short < 15 words and use question context as priority. Do not use quotation marks.) that incorporates key context from the text to find relevant, up-to-date information for answering the question accurately. Output ONLY the query itself, nothing else.
 
 Text: ${originalText.substring(0, 2000)}
 
@@ -516,7 +540,7 @@ Question: ${question}`;
         let webContext = searchContext ? `\n\nWeb Search Context (use ONLY for the answer section):\n${searchContext}` : '';
 
         // Step 3: Full response - Separate original text and web context
-        finalPrompt = `Provide a concise summary of the ORIGINAL TEXT ONLY (do NOT include or reference any web search context in the summary) in under 400 words total, structured as 10 key bullet points for readability (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Then, directly answer this question in under 100 words, drawing from the original text AND the web search context: "${question}". Use "Summary:" for bullets and "Answer:" for the response. Keep overall output short to fit fully (total under 500 words).
+        finalPrompt = `Today is ${currentDate} , Provide a concise summary of the ORIGINAL TEXT (integrate relevant context from the Web Search Results where they add value but focus on ORIGINAL TEXT. Mark any web-sourced additions with [WEB:..added context..].) in under 400 words total, structured as 10 key bullet points for readability (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Then, directly answer this question in under 100 words, drawing from the original text AND the web search context: "${question}". Use "Summary:" for bullets and "Answer:" for the response. Keep overall output short to fit fully (total under 500 words).
 
 Original Text:
 ${originalText}
@@ -533,7 +557,8 @@ ${webContext}`;
       // No search: Single call with fallback prompt (no refinement or search)
       output.innerHTML = `Generating without web search (no search key)...`;
 
-      finalPrompt = `Provide a concise summary of the following text in under 400 words total, structured as 10 key bullet points for readability (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Then, directly answer this question in under 100 words: "${question}". Use "Summary:" for bullets and "Answer:" for the response. Keep overall output short to fit fully (total under 500 words).
+      finalPrompt = `Today is ${currentDate} , Provide a concise summary of the following text in under 400 words total, structured as 10 key bullet points for readability (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Then, directly answer this question in under 100 words: "${question}". Use "Summary:" for bullets and "Answer:" for the response. Keep overall output short to fit fully (total under 500 words).
+
 
 Text:
 ${originalText}`;
@@ -570,7 +595,7 @@ ${originalText}`;
       let visionPrompt;
       if (!question) {
         // No question: Direct description (1 call)
-        visionPrompt = 'Describe and summarize this image in detail, structured as 10 key bullet points for readability.';
+        visionPrompt = `Describe and summarize this image in detail, structured as 10 key bullet points for readability. (today is ${currentDate})`;
 
         const generatedText = await callGemini(apiKey, selectedModel, visionPrompt, undefined, true, base64Image);
         output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
@@ -583,7 +608,7 @@ ${originalText}`;
         output.innerHTML = `Refining search query for image...`;
 
         // Step 1: Refine query (no text context, so just enhance question)
-        const refinePrompt = `Based on this user question about an image, generate a single, concise web search query (under 400 characters) to find relevant context or details for answering it accurately. Output ONLY the query.
+        const refinePrompt = `Based on this user question about an image, generate a single, concise web search query (today is ${currentDate}, keep the refine search query short < 15 words and use question context as priority. Do not use quotation marks.) to find relevant context or details for answering it accurately. Output ONLY the query.
 
 Question: ${question}`;
 
@@ -599,7 +624,7 @@ Question: ${question}`;
         let webContext = searchContext ? `\n\nWeb Search Context (use ONLY for the answer section):\n${searchContext}` : '';
 
         // Step 3: Full vision response - Separate image description and web context
-        visionPrompt = `Describe and summarize this image in detail, structured as 10 key bullet points for readability (do NOT include or reference any web search context in the description). Then, answer this question about the image in under 100 words, drawing from the image AND the web search context: "${question}". Use "Description:" for bullets and "Answer:" for the response.${webContext}`;
+        visionPrompt = `Describe and summarize this image in detail, structured as 10 key bullet points for readability ( Use websearch (if available) to enrich the summary. , today is ${currentDate}). Then, answer this question about the image in under 100 words, drawing from the image AND the web search context: "${question}". Use "Description:" for bullets and "Answer:" for the response.${webContext}`;
 
         const generatedText = await callGemini(apiKey, selectedModel, visionPrompt, 'Generating full response with web context...', true, base64Image);
         output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
@@ -607,7 +632,7 @@ Question: ${question}`;
         // No search: Single Gemini call with fallback prompt (no refinement or search)
         output.innerHTML = `Generating without web search (no search key)...`;
 
-        visionPrompt = `Describe and summarize this image in detail, structured as 10 key bullet points for readability. Then, answer this question about the image in under 100 words: "${question}". Use "Description:" for bullets and "Answer:" for the response.`;
+        visionPrompt = `Describe and summarize this image in detail, structured as 10 key bullet points for readability. (today is ${currentDate}) Then, answer this question about the image in under 100 words: "${question}". Use "Description:" for bullets and "Answer:" for the response.`;
 
         const generatedText = await callGemini(apiKey, selectedModel, visionPrompt, undefined, true, base64Image);
         output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
@@ -639,12 +664,12 @@ Question: ${question}`;
       // Auto-mode: Summary only if no question, Q&A if question entered (with web-search reminder)
       let prompt;
       if (!question) {
-        prompt = `Provide a concise summary of the following text in under 400 words total, structured as 10 key bullet points for readability (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Keep overall output short to fit fully.
+        prompt = `Today is ${currentDate} , Provide a concise summary of the following text in under 400 words total, structured as 10 key bullet points for readability (integrate relevant context from the Web Search Results where they add value but focus on ORIGINAL TEXT. Mark any web-sourced additions with [WEB:..added context..].) (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Keep overall output short to fit fully.
 
 Text:
 ${text}`;
       } else {
-        prompt = `Provide a concise summary of the following text in under 400 words total, structured as 10 key bullet points for readability (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Then, directly answer this question using the text and latest web-search in under 100 words: "${question}". Use "Summary:" for bullets and "Answer:" for the response. Keep overall output short to fit fully (total under 500 words).
+        prompt = `Today is ${currentDate} , Provide a concise summary of the following text in under 400 words total, structured as 10 key bullet points for readability (integrate relevant context from the Web Search Results where they add value but focus on ORIGINAL TEXT. Mark any web-sourced additions with [WEB:..added context..]. (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Then, directly answer this question using the text and latest web-search in under 100 words: "${question}". Use "Summary:" for bullets and "Answer:" for the response. Keep overall output short to fit fully (total under 500 words).
 
 Text:
 ${text}`;
@@ -669,6 +694,7 @@ ${text}`;
   console.log('Init complete'); // Debug
 
 });
+
 
 
 
