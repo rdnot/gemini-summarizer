@@ -426,10 +426,10 @@ function renderMarkdown(mdText) {
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/_(.*?)_/g, '<em>$1</em>')
     // Inline code (`code`)
-    .replace(/`(.*?)`/g, '<code style="background:#f4f4f4;padding:0.1em 0.3em;border-radius:2px;font-family:monospace;">$1</code>')
+    .replace(/`(.*?)`/g, '<code style="background:#f4f4f4;padding:0.1em 0.3em;overflow-x:auto;white-space:pre-wrap;word-break:break-word;border-radius:2px;font-family:monospace;">$1</code>')
     // Code blocks (```code``` or indented)
-    .replace(/```([\s\S]*?)```/g, '<pre style="margin:0.5em 0;background:#f4f4f4;padding:0.75em;overflow-x:auto;border-radius:3px;"><code>$1</code></pre>')
-    .replace(/^( {4}.*)$/gm, '<pre style="margin:0.5em 0;background:#f4f4f4;padding:0.75em;overflow-x:auto;border-radius:3px;"><code>$1</code></pre>')
+    .replace(/```([\s\S]*?)```/g, '<pre style="margin:0.5em 0;background:#f4f4f4;padding:0.75em;overflow-x:auto;white-space:pre-wrap;word-break:break-word;border-radius:3px;"><code>$1</code></pre>')
+    .replace(/^( {4}.*)$/gm, '<pre style="margin:0.5em 0;background:#f4f4f4;padding:0.75em;overflow-x:auto;white-space:pre-wrap;word-break:break-word;border-radius:3px;"><code>$1</code></pre>')
     // Blockquotes (> text)
     .replace(/^> (.*$)/gm, '<blockquote style="margin:0.5em 0;padding-left:0.75em;border-left:2px solid #ddd;color:#666;">$1</blockquote>')
     // Lists: First replace bullets/numbers to <li> only (preserve \n for grouping)
@@ -692,6 +692,7 @@ ${text}`;
   console.log('Init complete'); // Debug
 
 });
+
 
 
 
