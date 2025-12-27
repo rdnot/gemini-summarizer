@@ -28,6 +28,36 @@ const today = new Date();
 const currentDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
   let fullPageText = ''; // Store untrimmed text
 
+// Universal retry wrapper for all text API calls (Gemini & OpenRouter)
+async function callWithRetry(apiCallFn, maxRetries = 3) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await apiCallFn();
+
+      // Check for empty response
+      if (!result || result.trim().length === 0) {
+        throw new Error('RETRY_EMPTY_RESPONSE');
+      }
+
+      return result;
+    } catch (error) {
+      const isRetryable =
+        error.message === 'RETRY_EMPTY_RESPONSE' ||
+        error.message === 'RETRY_RATE_LIMIT' ||
+        error.message.includes('429');
+
+      if (isRetryable && attempt < maxRetries) {
+        const waitTime = error.message.includes('429') || error.message === 'RETRY_RATE_LIMIT' ? 3000 : 1000;
+        console.warn(`Retry ${attempt + 1}/${maxRetries}: ${error.message}`);
+        output.innerHTML = `Retrying (${attempt + 1}/${maxRetries})...`;
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+        continue;
+      }
+      throw error; // Final fail — rethrow
+    }
+  }
+}
+  
   // Load saved API keys and model on popup open
   chrome.storage.sync.get(['geminiApiKey', 'searchApiKey', 'useOpenRouter', 'openRouterApiKey', 'openRouterModel', 'selectedModel', 'autoSummarize'], function(result) {
     console.log('Storage result:', result); // Debug
@@ -157,7 +187,12 @@ async function callGemini(apiKey, model, prompt, outputMsg = '', isVision = fals
     })
   });
 
-  if (!response.ok) throw new Error(`API error: ${response.status} - ${response.statusText}`);
+  if (!response.ok) {
+  if (response.status === 429) {
+    throw new Error('RETRY_RATE_LIMIT');
+  }
+  throw new Error(`API error: ${response.status} - ${response.statusText}`);
+}
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -231,7 +266,12 @@ async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
     })
   });
 
-  if (!response.ok) throw new Error(`OpenRouter API error: ${response.status} - ${response.statusText}`);
+  if (!response.ok) {
+  if (response.status === 429) {
+    throw new Error('RETRY_RATE_LIMIT');
+  }
+  throw new Error(`OpenRouter API error: ${response.status} - ${response.statusText}`);
+}
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -278,7 +318,7 @@ async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
   output.innerHTML = renderMarkdown(finalClean);
   return finalClean;
 }
-  // Helper: Call appropriate API for text generation
+  // Helper: Call appropriate API for text generation (with retry)
   async function callTextApi(prompt, outputMsg = '', isRefine = false) {
     const apiKey = geminiApiKeyInput.value.trim();
     const useOR = getUseOpenRouter();
@@ -286,14 +326,18 @@ async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
     const orModel = getOpenRouterModel();
     const gemModel = modelSelect.value;
 
+    if (outputMsg) output.innerHTML = outputMsg;
+    
+  return await callWithRetry(async () => {  
     if (useOR && orKey) {
-      return await callOpenRouter(prompt, orKey, orModel, outputMsg);
+      return await callOpenRouter(prompt, orKey, orModel);
     } else if (apiKey) {
-      return await callGemini(apiKey, gemModel, prompt, outputMsg);
+      return await callGemini(apiKey, gemModel, prompt);
     } else {
       throw new Error('No valid API key for text generation.');
     }
-  }
+  }, 3); // max 3 retries
+}
 
   // Helper: Perform Web Search with refined query (detects API type)
   async function performWebSearch(refinedQuery, searchKey) {
@@ -692,6 +736,7 @@ ${text}`;
   console.log('Init complete'); // Debug
 
 });
+
 
 
 
