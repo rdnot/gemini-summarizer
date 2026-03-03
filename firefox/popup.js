@@ -36,7 +36,12 @@ async function callWithRetry(apiCallFn, maxRetries = 3) {
 
       // Check for empty response
       if (!result || result.trim().length === 0) {
-        throw new Error('RETRY_EMPTY_RESPONSE');
+        await new Promise(resolve => setTimeout(resolve, 5000));
+        const retryResult = await apiCallFn();
+        if (!retryResult || retryResult.trim().length === 0) {
+          throw new Error('RETRY_EMPTY_RESPONSE');
+        }
+        return retryResult;
       }
 
       return result;
@@ -180,10 +185,10 @@ async function callGemini(apiKey, model, prompt, outputMsg = '', isVision = fals
         temperature: 0.5
       },
       safetySettings: [
-        { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
-        { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE" },
-        { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_LOW_AND_ABOVE" },
-        { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_LOW_AND_ABOVE" }
+        { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH" },
+        { "category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_ONLY_HIGH" },
+        { "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_ONLY_HIGH" },
+        { "category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_ONLY_HIGH" }
       ]
     })
   });
@@ -738,6 +743,7 @@ ${text}`;
   console.log('Init complete'); // Debug
 
 });
+
 
 
 
