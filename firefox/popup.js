@@ -260,7 +260,7 @@ async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://your-site.com', // Optional
+      'HTTP-Referer': 'https://github.com/rdnot/gemini-summarizer/', // Optional
       'X-Title': 'Gemini Summarizer' // Optional
     },
     body: JSON.stringify({
@@ -743,6 +743,7 @@ ${text}`;
   console.log('Init complete'); // Debug
 
 });
+
 
 
 
