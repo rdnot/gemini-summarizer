@@ -553,7 +553,7 @@ function renderMarkdown(mdText) {
 
 // History button: Load last summary
 document.getElementById('historyBtn').addEventListener('click', () => {
-  chrome.storage.local.get(['lastSummary'], (result) => {
+  browser.storage.local.get(['lastSummary']).then((result) => {
     if (result.lastSummary) {
       document.getElementById('output').innerHTML = renderMarkdown(result.lastSummary.replace(/\n\n/g, '\n'));
     } else {
@@ -592,7 +592,7 @@ ${originalText}`;
         const generatedText = await callTextApi(finalPrompt, `Generating summary...`);
         output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
         // Save to history
-        chrome.storage.local.set({ lastSummary: generatedText });
+        browser.storage.local.set({ lastSummary: generatedText });
       } catch (error) {
         console.error('Error:', error);
         output.innerHTML = `Error: ${error.message}\n\nTip: Check console for details.`;
@@ -635,7 +635,7 @@ ${webContext}`;
         const generatedText = await callTextApi(finalPrompt, 'Generating full response with web context...');
         output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
         // Save to history
-        chrome.storage.local.set({ lastSummary: generatedText });
+        browser.storage.local.set({ lastSummary: generatedText });
       } catch (error) {
         console.error('Error:', error);
         output.innerHTML = `Error: ${error.message}\n\nTip: Check console for details.`;
@@ -654,7 +654,7 @@ ${originalText}`;
         const generatedText = await callTextApi(finalPrompt);
         output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
         // Save to history
-        chrome.storage.local.set({ lastSummary: generatedText });
+        browser.storage.local.set({ lastSummary: generatedText });
       } catch (error) {
         console.error('Error:', error);
         output.innerHTML = `Error: ${error.message}\n\nTip: Check console for details.`;
@@ -689,7 +689,7 @@ ${originalText}`;
         const generatedText = await callGemini(apiKey, selectedModel, visionPrompt, undefined, true, base64Image);
         output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
         // Save to history
-        chrome.storage.local.set({ lastSummary: generatedText });
+        browser.storage.local.set({ lastSummary: generatedText });
         return;
       }
 
@@ -720,7 +720,7 @@ Question: ${question}`;
         const generatedText = await callGemini(apiKey, selectedModel, visionPrompt, 'Generating full response with web context...', true, base64Image);
         output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
         // Save to history
-        chrome.storage.local.set({ lastSummary: generatedText });
+        browser.storage.local.set({ lastSummary: generatedText });
       } else {
         // No search: Single Gemini call with fallback prompt (no refinement or search)
         output.innerHTML = `Generating without web search (no search key)...`;
@@ -730,7 +730,7 @@ Question: ${question}`;
         const generatedText = await callGemini(apiKey, selectedModel, visionPrompt, undefined, true, base64Image);
         output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
         // Save to history
-        chrome.storage.local.set({ lastSummary: generatedText });
+        browser.storage.local.set({ lastSummary: generatedText });
       }
     } catch (error) {
       console.error('Error:', error);
