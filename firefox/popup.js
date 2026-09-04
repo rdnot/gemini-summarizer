@@ -49,10 +49,11 @@ async function callWithRetry(apiCallFn, maxRetries = 3) {
       const isRetryable =
         error.message === 'RETRY_EMPTY_RESPONSE' ||
         error.message === 'RETRY_RATE_LIMIT' ||
-        error.message.includes('429');
+        error.message.includes('429') ||
+        error.message.includes('503');
 
       if (isRetryable && attempt < maxRetries) {
-        const waitTime = error.message.includes('429') || error.message === 'RETRY_RATE_LIMIT' ? 3000 : 1000;
+        const waitTime = error.message.includes('429') || error.message.includes('503') || error.message === 'RETRY_RATE_LIMIT' ? 3000 : 1000;
         console.warn(`Retry ${attempt + 1}/${maxRetries}: ${error.message}`);
         output.innerHTML = `Retrying (${attempt + 1}/${maxRetries})...`;
         await new Promise(resolve => setTimeout(resolve, waitTime));
