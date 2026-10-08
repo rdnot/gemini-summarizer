@@ -203,8 +203,7 @@ async function callGemini(apiKey, model, prompt, outputMsg = '', isVision = fals
     body: JSON.stringify({
       contents,
       generationConfig: {
-        maxOutputTokens: 8192,
-        temperature: 0.5
+        maxOutputTokens: 8192
       },
       safetySettings: [
         { "category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_ONLY_HIGH" },
