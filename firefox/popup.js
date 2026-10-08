@@ -128,13 +128,15 @@ autoSummarizeCheckbox.addEventListener('change', function() {
 });
 
   // Auto-load text from current tab (selection or full page) - NO TRIM
+  // Own function so the early return below doesn't skip the button setup further down
+  async function loadTabText() {
   try {
     console.log('Querying active tab'); // Debug
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     console.log('Active tab:', tab); // Debug
     if (!tab || (!tab.url.startsWith('http://') && !tab.url.startsWith('https://'))) {
       output.innerHTML = `Can't load text from this tab (URL: ${tab ? tab.url : 'No tab'}). Open on a webpage like google.com and try again.`;
-      return;
+      return; // only exits loadTabText()
     }
     console.log('Sending message to tab:', tab.id); // Debug
     browser.tabs.sendMessage(tab.id, { action: 'getText' }, function(response) {
@@ -166,6 +168,8 @@ if (autoSummarizeCheckbox.checked) {
     console.error('Tab query error:', error);
     output.innerHTML = `Tab query failed: ${error.message}. Ensure a tab is active.`;
   }
+  }
+  loadTabText();
 
   // Helper: Get Search API key (from input or storage)
   function getSearchApiKey() {
@@ -414,7 +418,7 @@ async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
         }
       } else if (keyPrefix === 'bs') {
         // Brave
-        const searchResponse = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(refinedQuery)}&count=10&freshness=pm&text_decorations=false&extra_snippets=true&result_filter=web&summary=true`, {
+        const searchResponse = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(refinedQuery)}&count=10&freshness=pm&text_decorations=false&extra_snippets=true&result_filter=web`, {
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -428,7 +432,7 @@ async function callOpenRouter(prompt, apiKey, model, outputMsg = '') {
           console.warn('No search results; proceeding without.');
           return '';
         }
-        let context = searchData.summarizer ? searchData.summarizer.key : '';
+        let context = '';
         if (searchData.web.results) {
           context += searchData.web.results.map(result => {
             let snippet = result.description || '';
