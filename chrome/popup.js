@@ -623,7 +623,7 @@ Question: ${question}`;
         let webContext = searchContext ? `\n\nWeb Search Context (use ONLY for the answer section):\n${searchContext}` : '';
 
         // Step 3: Full response - Separate original text and web context
-        finalPrompt = `Today is ${currentDate} , Provide a concise summary of the ORIGINAL TEXT (integrate relevant context from the Web Search Results where they add value but focus on ORIGINAL TEXT. Mark any web-sourced additions with [WEB:..added context..].) in under 400 words total, structured as 10 key bullet points for readability (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Then, directly answer this question in under 100 words, drawing from the original text AND the web search context: "${question}". Use "Summary:" for bullets and "Answer:" for the response. Keep overall output short to fit fully (total under 500 words).
+        finalPrompt = `Today is ${currentDate} , Provide a concise summary of the ORIGINAL TEXT (integrate relevant context from the Web Search Results where they add value but focus on ORIGINAL TEXT. Mark any web-sourced additions with [WEB:..added context..].) in under 400 words total, structured as 10 key bullet points for readability (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Then, directly answer this question in under 100 words, drawing from the original text AND the web search context: "${question}". Use "Summary:" for bullets and "Answer:" for the response. Show answer part before summary part. Keep overall output short to fit fully (total under 500 words).
 
 Original Text:
 ${originalText}
@@ -642,7 +642,7 @@ ${webContext}`;
       // No search: Single call with fallback prompt (no refinement or search)
       output.innerHTML = `Generating without web search (no search key)...`;
 
-      finalPrompt = `Today is ${currentDate} , Provide a concise summary of the following text in under 400 words total, structured as 10 key bullet points for readability (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Then, directly answer this question in under 100 words: "${question}". Use "Summary:" for bullets and "Answer:" for the response. Keep overall output short to fit fully (total under 500 words).
+      finalPrompt = `Today is ${currentDate} , Provide a concise summary of the following text in under 400 words total, structured as 10 key bullet points for readability (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Then, directly answer this question in under 100 words: "${question}". Use "Summary:" for bullets and "Answer:" for the response. Show answer part before summary part. Keep overall output short to fit fully (total under 500 words).
 
 Text:
 ${originalText}`;
@@ -712,7 +712,7 @@ Question: ${question}`;
         let webContext = searchContext ? `\n\nWeb Search Context (use ONLY for the answer section):\n${searchContext}` : '';
 
         // Step 3: Full vision response - Separate image description and web context
-        visionPrompt = `Describe and summarize this image in detail, structured as 10 key bullet points for readability ( Use websearch (if available) to enrich the summary. , today is ${currentDate}). Then, answer this question about the image in under 100 words, drawing from the image AND the web search context: "${question}". Use "Description:" for bullets and "Answer:" for the response.${webContext}`;
+        visionPrompt = `Describe and summarize this image in detail, structured as 10 key bullet points for readability ( Use websearch (if available) to enrich the summary. , today is ${currentDate}). Then, answer this question about the image in under 100 words, drawing from the image AND the web search context: "${question}". Use "Description:" for bullets and "Answer:" for the response. Show answer part before description part.${webContext}`;
 
         const generatedText = await callGemini(apiKey, selectedModel, visionPrompt, 'Generating full response with web context...', true, base64Image);
         output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
@@ -722,7 +722,7 @@ Question: ${question}`;
         // No search: Single Gemini call with fallback prompt (no refinement or search)
         output.innerHTML = `Generating without web search (no search key)...`;
 
-        visionPrompt = `Describe and summarize this image in detail, structured as 10 key bullet points for readability (today is ${currentDate}). Then, answer this question about the image in under 100 words: "${question}". Use "Description:" for bullets and "Answer:" for the response.`;
+        visionPrompt = `Describe and summarize this image in detail, structured as 10 key bullet points for readability (today is ${currentDate}). Then, answer this question about the image in under 100 words: "${question}". Use "Description:" for bullets and "Answer:" for the response. Show answer part before description part.`;
 
         const generatedText = await callGemini(apiKey, selectedModel, visionPrompt, undefined, true, base64Image);
         output.innerHTML = renderMarkdown(generatedText.replace(/\n\n/g, '\n'));
@@ -761,7 +761,7 @@ Question: ${question}`;
 Text:
 ${text}`;
       } else {
-        prompt = `Today is ${currentDate} , Provide a concise summary of the following text in under 400 words total, structured as 10 key bullet points for readability (integrate relevant context from the Web Search Results where they add value but focus on ORIGINAL TEXT. Mark any web-sourced additions with [WEB:..added context..]. (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Then, directly answer this question using the text and latest web-search in under 100 words: "${question}". Use "Summary:" for bullets and "Answer:" for the response. Keep overall output short to fit fully (total under 500 words).
+        prompt = `Today is ${currentDate} , Provide a concise summary of the following text in under 400 words total, structured as 10 key bullet points for readability (integrate relevant context from the Web Search Results where they add value but focus on ORIGINAL TEXT. Mark any web-sourced additions with [WEB:..added context..]. (one bullet per major topic or section). Each bullet should cover the main ideas, updates, and key details briefly. Then, directly answer this question using the text and latest web-search in under 100 words: "${question}". Use "Summary:" for bullets and "Answer:" for the response. Show answer part before summary part. Keep overall output short to fit fully (total under 500 words).
 
 Text:
 ${text}`;
