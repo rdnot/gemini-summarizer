@@ -42,7 +42,7 @@ questionInput.addEventListener('keydown', function(event) {
   const output = document.getElementById('output');
 // Add this near the top of your script (after const output = ...;)
 const today = new Date();
-const currentDate = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+const currentDate = today.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); // e.g. 8 October 2026
   let fullPageText = ''; // Store untrimmed text
 
 // Universal retry wrapper for all text API calls (Gemini & OpenRouter)
@@ -195,10 +195,11 @@ async function callGemini(apiKey, model, prompt, outputMsg = '', isVision = fals
     ] }];
   }
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse&key=${apiKey}`, {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:streamGenerateContent?alt=sse`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'x-goog-api-key': apiKey
     },
     body: JSON.stringify({
       contents,
@@ -532,7 +533,7 @@ function renderMarkdown(mdText) {
     const orKey = openRouterApiKeyInput.value.trim();
     const orModel = openRouterModelInput.value.trim();
     const model = modelSelect.value;
-    if (geminiKey) {
+    if (geminiKey || (useOR && orKey)) {
       browser.storage.sync.set({ 
         geminiApiKey: geminiKey, 
         searchApiKey: searchKey || null,
@@ -546,7 +547,7 @@ function renderMarkdown(mdText) {
         output.innerHTML = 'API keys and model saved successfully!';
       });
     } else {
-      output.innerHTML = 'Please enter a valid Gemini API key.';
+      output.innerHTML = 'Please enter a valid Gemini API key (or enable OpenRouter with its API key).';
     }
   });
 
@@ -568,8 +569,8 @@ document.getElementById('historyBtn').addEventListener('click', () => {
     const text = textInput.value.trim();
     const question = questionInput.value.trim();
 
-    if (!apiKey) {
-      output.innerHTML = 'Please enter and save your Gemini API key first.';
+    if (!apiKey && !(getUseOpenRouter() && getOpenRouterApiKey())) {
+      output.innerHTML = 'Please enter and save your Gemini API key first (or enable OpenRouter with its API key).';
       return;
     }
     if (!text) {

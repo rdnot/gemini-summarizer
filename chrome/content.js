@@ -11,7 +11,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       return;
     }
 
-    // Wait for dynamic content (5s for heavy sites like AHA)
+    // Wait 0.25s for dynamic content (heavy sites like AHA)
     setTimeout(() => {
       try {
         // Site-specific for ahajournals.org / journal sites
@@ -69,7 +69,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log('Fallback length:', fallbackText.length);
         sendResponse({ text: fallbackText, isSelection: false });
       }
-    }, 1000); // 1s wait
+    }, 250); // 0.25s wait
 
     // Port safety
     return true;
