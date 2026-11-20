@@ -106,6 +106,7 @@ async function callWithRetry(apiCallFn, maxRetries = 3) {
     }
     if (result.selectedModel) {
       modelSelect.value = result.selectedModel;
+      if (!modelSelect.value) modelSelect.selectedIndex = 0;
       console.log('Model loaded:', result.selectedModel);
     }
     if (result.savedQuestion !== undefined) {
